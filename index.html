@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interview Practice Partner - Select Job Role</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header class="main-header">
+            <h1>🎯 Interview Practice Partner</h1>
+            <p class="subtitle">Select a job role to start your mock interview</p>
+        </header>
+
+        <div class="job-grid" id="jobGrid">
+            <!-- Jobs will be dynamically loaded -->
+        </div>
+
+        <footer class="main-footer">
+            <p>Powered by AI • Practice makes perfect</p>
+        </footer>
+    </div>
+
+    <!-- User Information Modal (NEW) -->
+    <div class="modal" id="userInfoModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>📝 Interview Information</h2>
+                <p class="job-title-display" id="infoJobTitle"></p>
+            </div>
+            
+            <form id="userInfoForm" class="user-info-form">
+                <div class="form-group">
+                    <label for="fullName">Full Name <span class="required">*</span></label>
+                    <input 
+                        type="text" 
+                        id="fullName" 
+                        name="fullName" 
+                        placeholder="Enter your full name"
+                        required
+                        minlength="2"
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="organization">Organization / College / University <span class="required">*</span></label>
+                    <input 
+                        type="text" 
+                        id="organization" 
+                        name="organization" 
+                        placeholder="Your organization or educational institution"
+                        required
+                        minlength="2"
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="degree">Degree with Major <span class="required">*</span></label>
+                    <input 
+                        type="text" 
+                        id="degree" 
+                        name="degree" 
+                        placeholder="e.g., B.Tech in Computer Science, MBA in Marketing"
+                        required
+                        minlength="2"
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="currentRole">Current Job Role <span class="required">*</span></label>
+                    <input 
+                        type="text" 
+                        id="currentRole" 
+                        name="currentRole" 
+                        placeholder='e.g., Software Engineer, Marketing Manager, or "Student"'
+                        required
+                        minlength="2"
+                    >
+                    <small class="form-hint">If you're a student, simply type "Student"</small>
+                </div>
+
+                <div class="instructions-box">
+                    <h3>📋 Important Instructions</h3>
+                    <ul class="instructions-list">
+                        <li><strong>🎥 Camera & Microphone:</strong> Please allow access to your camera and microphone when prompted for the best interview experience.</li>
+                        <li><strong>🚫 No AI Tools:</strong> Avoid using AI assistants or search engines during the interview. This is for your self-evaluation and skill improvement.</li>
+                        <li><strong>🎯 Be Authentic:</strong> Answer questions honestly based on your real experience and knowledge.</li>
+                        <li><strong>🔇 Quiet Environment:</strong> Choose a quiet space with minimal background noise for voice mode.</li>
+                        <li><strong>💪 Stay Confident:</strong> Treat this as a real interview. Take your time and think before answering.</li>
+                    </ul>
+                    <div class="motivation-quote">
+                        <p>💡 <em>"Practice is the hardest part of learning, and training is the essence of transformation."</em></p>
+                        <p class="quote-footer">— Good luck, and do your best! 🌟</p>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="button" class="btn-secondary" onclick="closeUserInfoModal()">Cancel</button>
+                    <button type="submit" class="btn-primary">Continue to Mode Selection →</button>
+                </div>
+            </form>
+
+            <button class="close-modal" onclick="closeUserInfoModal()">✕</button>
+        </div>
+    </div>
+
+    <!-- Mode Selection Modal -->
+    <div class="modal" id="modeModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Choose Interview Mode</h2>
+                <p class="job-title-display" id="selectedJobTitle"></p>
+            </div>
+            <div class="mode-options">
+                <div class="mode-card" onclick="selectMode('chat')">
+                    <div class="mode-icon">💬</div>
+                    <h3>Chat Mode</h3>
+                    <p>Text-based interview with instant responses</p>
+                    <button class="mode-btn">Start Chat Interview</button>
+                </div>
+                <div class="mode-card" onclick="selectMode('voice')">
+                    <div class="mode-icon">🎤</div>
+                    <h3>Voice Mode</h3>
+                    <p>Realistic voice conversation with AI interviewer</p>
+                    <button class="mode-btn">Start Voice Interview</button>
+                </div>
+            </div>
+            <button class="close-modal" onclick="closeModal()">✕</button>
+        </div>
+    </div>
+
+    <script src="config.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>

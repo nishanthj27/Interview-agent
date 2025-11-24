@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Interview - Interview Practice Partner</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body class="interview-body">
+    <div class="interview-container">
+        <header class="interview-header">
+            <div class="header-left">
+                <button class="back-btn" onclick="goBack()">← Back</button>
+                <div class="job-info">
+                    <h2 id="jobTitle">Loading...</h2>
+                    <span class="mode-badge">Chat Mode</span>
+                </div>
+            </div>
+            <div class="header-right">
+                <div class="timer" id="timer">10:00</div>
+                <button class="end-btn" onclick="endInterview()">End Interview</button>
+            </div>
+        </header>
+
+        <div class="chat-container">
+            <div class="messages-wrapper" id="messagesWrapper">
+                <div class="welcome-message">
+                    <div class="welcome-icon">👋</div>
+                    <h3>Welcome to your interview!</h3>
+                    <p>Your interview will begin shortly. Good luck!</p>
+                </div>
+            </div>
+
+            <div class="input-area">
+                <div class="typing-indicator" id="typingIndicator" style="display: none;">
+                    <span></span><span></span><span></span>
+                </div>
+                <div class="input-wrapper">
+                    <textarea 
+                        id="userInput" 
+                        placeholder="Type your answer here..." 
+                        rows="1"
+                        maxlength="2000"
+                    ></textarea>
+                    <button class="send-btn" id="sendBtn" onclick="sendMessage()">
+                        <span class="send-icon">➤</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Feedback Modal -->
+    <div class="modal feedback-modal" id="feedbackModal">
+        <div class="modal-content feedback-content">
+            <div class="feedback-header">
+                <h2>📊 Interview Feedback</h2>
+            </div>
+            <div class="feedback-body" id="feedbackBody">
+                <div class="loading-feedback">
+                    <div class="spinner"></div>
+                    <p>Analyzing your interview performance...</p>
+                </div>
+            </div>
+            <div class="feedback-actions">
+                <button class="btn-secondary" onclick="goHome()">Back to Home</button>
+                <button class="btn-primary" onclick="retakeInterview()">Retake Interview</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="config.js"></script>
+    <script src="memory-manager.js"></script>
+    <script src="gemini-service.js"></script>
+    <script src="chat-mode.js"></script>
+</body>
+</html>
