@@ -2,8 +2,7 @@
 
 > **An intelligent, adaptive conversational AI that conducts realistic job interview simulations with human-like interactions and personalized feedback.**
 
-[![Demo Video](https://img.shields.io/badge/Watch-Demo%20Video-red?style=for-the-badge&logo=youtube)](YOUR_VIDEO_LINK_HERE)
-[![Live Demo](https://img.shields.io/badge/Try-Live%20Demo-blue?style=for-the-badge)](YOUR_DEMO_LINK_HERE)
+[![Demo Video](https://img.shields.io/badge/Watch-Demo%20Video-red?style=for-the-badge&logo=youtube)](https://drive.google.com/file/d/1Nr1IHsLBHKqkXXJKUXxc6LbD73Zz6nsC/view?usp=sharing)
 
 ---
 
@@ -756,8 +755,8 @@ AI: "I'm here to help you practice interviews, but I can't write your resume. Le
 ### Step 1: Clone Repository
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/interview-practice-partner.git
-cd interview-practice-partner
+git clone https://github.com/nishanthj27/Interview-agent.git
+cd Interview-agent
 ```
 
 ### Step 2: Configure API Key
@@ -916,7 +915,7 @@ NATURAL CONVERSATION RULES:
 `;
 ```
 
-**Demo Timestamp**: [XX:XX - Shows natural flow and acknowledgments]
+**Demo Timestamp**: [00:30 - Shows natural flow and acknowledgments]
 
 ---
 
@@ -943,7 +942,7 @@ function handleQuickCommand(text) {
 }
 ```
 
-**Demo Timestamp**: [XX:XX - Shows edge case handling]
+**Demo Timestamp**: [02:00 - Shows edge case handling]
 
 ---
 
@@ -965,7 +964,7 @@ function handleQuickCommand(text) {
 // Adaptive prompts: buildSystemPrompt() with user profiling
 ```
 
-**Demo Timestamp**: [XX:XX - Architecture walkthrough]
+**Demo Timestamp**: [03:00 - Architecture walkthrough]
 
 ---
 
@@ -996,7 +995,7 @@ getAdaptiveDifficultyInstruction() {
 }
 ```
 
-**Demo Timestamp**: [XX:XX - Shows adaptation between student/professional]
+**Demo Timestamp**: [03:30 - Shows adaptation between student/professional]
 
 ---
 
@@ -1064,8 +1063,8 @@ This isn't just a chatbot that asks questions. It's an **intelligent agent** tha
 
 **Nishanth J**
 - Email: nishanthj2707@gmail.com
-- LinkedIn: [linkedin.com/in/yourprofile](https://linkedin.com/in/yourprofile)
-- GitHub: [github.com/yourusername](https://github.com/yourusername)
+- LinkedIn: [linkedin.com/in/yourprofile](https://www.linkedin.com/in/nishanth-jayaraman-a85717257/)
+- GitHub: [github.com/yourusername](https://github.com/nishanthj27)
 
 ---
 
