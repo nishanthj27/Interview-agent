@@ -3,6 +3,7 @@
 > **An intelligent, adaptive conversational AI that conducts realistic job interview simulations with human-like interactions and personalized feedback.**
 
 [![Demo Video](https://img.shields.io/badge/Watch-Demo%20Video-red?style=for-the-badge&logo=youtube)](https://drive.google.com/file/d/1Nr1IHsLBHKqkXXJKUXxc6LbD73Zz6nsC/view?usp=sharing)
+[![Live Demo](https://img.shields.io/badge/Try-Live%20Demo-blue?style=for-the-badge)](https://interview-practice-agent.vercel.app/)
 
 ---
 
