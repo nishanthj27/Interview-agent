@@ -2,11 +2,16 @@
 
 const CONFIG = {
     // API Configuration
-    GEMINI_API_KEY: 'API-KEY', // Replace with your actual API key 
+    GEMINI_API_KEYS: [
+        'API-KEY-1',
+        'API-KEY-2',
+        'API-KEY-3',
+        'API-KEY-4'
+    ], // Replace with your actual API keys
     
     // Model Configuration
     PRIMARY_MODEL: 'gemini-2.5-flash', // Primary model
-    FALLBACK_MODEL: 'gemini-2.0-flash', // Fallback model
+    FALLBACK_MODEL: 'gemini-2.5-flash-lite', // Fallback model
     
     // Interview Configuration
     INTERVIEW_DURATION: 600, // 10 minutes in seconds

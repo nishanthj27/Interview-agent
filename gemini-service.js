@@ -4,7 +4,11 @@
 
 class GeminiService {
     constructor() {
-        this.apiKey = CONFIG.GEMINI_API_KEY;
+        this.apiKeys = Array.isArray(CONFIG.GEMINI_API_KEYS) && CONFIG.GEMINI_API_KEYS.length > 0
+            ? CONFIG.GEMINI_API_KEYS
+            : [CONFIG.GEMINI_API_KEY].filter(Boolean);
+        this.apiKeyIndex = 0;
+        this.apiKey = this.apiKeys[0];
         this.currentModel = CONFIG.PRIMARY_MODEL;
         this.baseUrl = 'https://generativelanguage.googleapis.com/v1beta/models';
         this.requestCount = 0;
@@ -13,39 +17,46 @@ class GeminiService {
 
     // Generate content using Gemini API
     async generateContent(systemPrompt, conversationHistory) {
-        try {
-            const response = await this.makeRequest(
-                this.currentModel,
-                systemPrompt,
-                conversationHistory
-            );
-            
-            this.failureCount = 0;
-            return response;
-            
-        } catch (error) {
-            console.error(`Error with ${this.currentModel}:`, error);
-            this.failureCount++;
-            
-            if (this.currentModel === CONFIG.PRIMARY_MODEL && this.failureCount >= 2) {
-                console.log('Switching to fallback model...');
+        const keys = this.apiKeys.length > 0 ? this.apiKeys : [this.apiKey];
+        let lastError = null;
+
+        for (let i = 0; i < keys.length; i++) {
+            const keyIndex = (this.apiKeyIndex + i) % keys.length;
+            this.apiKey = keys[keyIndex];
+            this.currentModel = CONFIG.PRIMARY_MODEL;
+
+            try {
+                const response = await this.makeRequest(
+                    this.currentModel,
+                    systemPrompt,
+                    conversationHistory
+                );
+                this.failureCount = 0;
+                this.apiKeyIndex = keyIndex;
+                return response;
+            } catch (error) {
+                console.error(`Error with ${this.currentModel} using key ${keyIndex + 1}:`, error);
+                this.failureCount++;
                 this.currentModel = CONFIG.FALLBACK_MODEL;
-                
+                console.log('Switching to fallback model...');
+
                 try {
                     const response = await this.makeRequest(
                         this.currentModel,
                         systemPrompt,
                         conversationHistory
                     );
+                    this.failureCount = 0;
+                    this.apiKeyIndex = keyIndex;
                     return response;
                 } catch (fallbackError) {
-                    console.error('Fallback model also failed:', fallbackError);
-                    throw new Error('Both primary and fallback models failed. Please check your API key and internet connection.');
+                    console.error(`Fallback model also failed for key ${keyIndex + 1}:`, fallbackError);
+                    lastError = fallbackError;
                 }
             }
-            
-            throw error;
         }
+
+        throw new Error('All API keys failed with both primary and fallback models. Please check your API keys and internet connection.');
     }
 
     // Make API request (defensive extraction of response text)
@@ -315,62 +326,71 @@ Important:
     }
 
     let lastError = null;
+    const keys = this.apiKeys.length > 0 ? this.apiKeys : [this.apiKey];
 
-    for (let attempt = 0; attempt <= maxRetries; attempt++) {
-        try {
-            const raw = await this.makeRequest(this.currentModel, feedbackPrompt, []);
-            let parsed = null;
+    for (let i = 0; i < keys.length; i++) {
+        const keyIndex = (this.apiKeyIndex + i) % keys.length;
+        this.apiKey = keys[keyIndex];
+        this.currentModel = CONFIG.PRIMARY_MODEL;
+        this.failureCount = 0;
+
+        for (let attempt = 0; attempt <= maxRetries; attempt++) {
             try {
-                parsed = JSON.parse(raw);
-            } catch (parseErr) {
-                const jsonMatch = raw && raw.match ? raw.match(/\{[\s\S]*\}$/) || raw.match(/\{[\s\S]*\}/) : null;
-                if (jsonMatch && jsonMatch[0]) {
-                    try { parsed = JSON.parse(jsonMatch[0]); } catch (e) { parsed = null; }
+                const raw = await this.makeRequest(this.currentModel, feedbackPrompt, []);
+                let parsed = null;
+                try {
+                    parsed = JSON.parse(raw);
+                } catch (parseErr) {
+                    const jsonMatch = raw && raw.match ? raw.match(/\{[\s\S]*\}$/) || raw.match(/\{[\s\S]*\}/) : null;
+                    if (jsonMatch && jsonMatch[0]) {
+                        try { parsed = JSON.parse(jsonMatch[0]); } catch (e) { parsed = null; }
+                    }
                 }
-            }
 
-            if (!parsed) {
-                lastError = new Error('Model output not valid JSON');
-                if (attempt < maxRetries) {
-                    const repairPrompt = `
+                if (!parsed) {
+                    lastError = new Error('Model output not valid JSON');
+                    if (attempt < maxRetries) {
+                        const repairPrompt = `
 Previous model output was not valid JSON. Here is the raw output:
 -----
 ${raw}
 -----
 Please return valid JSON ONLY that follows the required schema.
 `;
-                    await this.makeRequest(this.currentModel, repairPrompt, []);
-                    continue;
-                } else {
-                    break;
+                        await this.makeRequest(this.currentModel, repairPrompt, []);
+                        continue;
+                    } else {
+                        break;
+                    }
                 }
-            }
 
-            const validated = this.validateParsedFeedback(parsed, conversationData, jobRole);
-            const conf = (typeof validated.parsedFeedback.confidence === 'number') ? validated.parsedFeedback.confidence : (validated.confidence || 0.5);
+                const validated = this.validateParsedFeedback(parsed, conversationData, jobRole);
+                const conf = (typeof validated.parsedFeedback.confidence === 'number') ? validated.parsedFeedback.confidence : (validated.confidence || 0.5);
 
-            if (conf < confidenceThreshold && attempt < maxRetries) {
-                lastError = new Error(`Low confidence from model (${conf})`);
-                const repairPrompt = `
+                if (conf < confidenceThreshold && attempt < maxRetries) {
+                    lastError = new Error(`Low confidence from model (${conf})`);
+                    const repairPrompt = `
 The JSON returned a low confidence (${conf}). Please re-evaluate and output valid JSON with role-specific improvements for "${jobRole.title}".
 ${userInfo ? `Remember to personalize for ${userInfo.fullName}.` : ''}
 `;
-                await this.makeRequest(this.currentModel, repairPrompt, []);
+                    await this.makeRequest(this.currentModel, repairPrompt, []);
+                    continue;
+                }
+
+                const finalFeedback = this.ensureAllFields(validated.parsedFeedback, conversationData, jobRole);
+                this.apiKeyIndex = keyIndex;
+                return finalFeedback;
+
+            } catch (err) {
+                console.error('generateFeedback attempt error:', err);
+                lastError = err;
+                this.failureCount++;
+                if (this.currentModel === CONFIG.PRIMARY_MODEL && this.failureCount >= 2) {
+                    this.currentModel = CONFIG.FALLBACK_MODEL;
+                }
+                await new Promise(r => setTimeout(r, 400 * (attempt + 1)));
                 continue;
             }
-
-            const finalFeedback = this.ensureAllFields(validated.parsedFeedback, conversationData, jobRole);
-            return finalFeedback;
-
-        } catch (err) {
-            console.error('generateFeedback attempt error:', err);
-            lastError = err;
-            this.failureCount++;
-            if (this.currentModel === CONFIG.PRIMARY_MODEL && this.failureCount >= 2) {
-                this.currentModel = CONFIG.FALLBACK_MODEL;
-            }
-            await new Promise(r => setTimeout(r, 400 * (attempt + 1)));
-            continue;
         }
     }
 
