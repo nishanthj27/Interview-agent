@@ -1,36 +1,8 @@
 // Configuration file for Interview Practice Partner
 
-function parseEnvText(envText) {
-    const result = {};
-    const lines = String(envText || '').split(/\r?\n/);
-    for (const line of lines) {
-        const trimmed = line.trim();
-        if (!trimmed || trimmed.startsWith('#')) continue;
-        const eqIndex = trimmed.indexOf('=');
-        if (eqIndex === -1) continue;
-        const key = trimmed.slice(0, eqIndex).trim();
-        const value = trimmed.slice(eqIndex + 1).trim();
-        if (key) result[key] = value;
-    }
-    return result;
-}
-
 function loadEnv() {
     if (typeof process !== 'undefined' && process.env) {
         return process.env;
-    }
-
-    if (typeof window !== 'undefined' && typeof XMLHttpRequest !== 'undefined') {
-        try {
-            const xhr = new XMLHttpRequest();
-            xhr.open('GET', '/.env', false);
-            xhr.send(null);
-            if (xhr.status >= 200 && xhr.status < 300) {
-                return parseEnvText(xhr.responseText);
-            }
-        } catch (e) {
-            return {};
-        }
     }
 
     return {};
@@ -38,14 +10,25 @@ function loadEnv() {
 
 const ENV = loadEnv();
 
+const ENV_KEYS_LIST = [
+    ENV.GEMINI_API_KEY_1,
+    ENV.GEMINI_API_KEY_2,
+    ENV.GEMINI_API_KEY_3,
+    ENV.GEMINI_API_KEY_4
+].map(k => (k || '').trim()).filter(Boolean);
+
+const ENV_KEYS_CSV = ENV.GEMINI_API_KEYS
+    ? ENV.GEMINI_API_KEYS.split(',').map(k => k.trim()).filter(Boolean)
+    : [];
+
 const CONFIG = {
     // API Configuration
-    GEMINI_API_KEYS: (ENV.GEMINI_API_KEYS ? ENV.GEMINI_API_KEYS.split(',').map(k => k.trim()).filter(Boolean) : [
+    GEMINI_API_KEYS: (ENV_KEYS_LIST.length > 0 ? ENV_KEYS_LIST : (ENV_KEYS_CSV.length > 0 ? ENV_KEYS_CSV : [
         'API-KEY-1',
         'API-KEY-2',
         'API-KEY-3',
         'API-KEY-4'
-    ]), // Replace with your actual API keys
+    ])), // Replace with your actual API keys
     
     // Model Configuration
     PRIMARY_MODEL: ENV.PRIMARY_MODEL || 'gemini-2.5-flash', // Primary model

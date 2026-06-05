@@ -4,104 +4,56 @@
 
 class GeminiService {
     constructor() {
-        this.apiKeys = Array.isArray(CONFIG.GEMINI_API_KEYS) && CONFIG.GEMINI_API_KEYS.length > 0
-            ? CONFIG.GEMINI_API_KEYS
-            : [CONFIG.GEMINI_API_KEY].filter(Boolean);
-        this.apiKeyIndex = 0;
-        this.apiKey = this.apiKeys[0];
         this.currentModel = CONFIG.PRIMARY_MODEL;
-        this.baseUrl = 'https://generativelanguage.googleapis.com/v1beta/models';
+        this.apiEndpoint = '/api/gemini';
         this.requestCount = 0;
         this.failureCount = 0;
     }
 
     // Generate content using Gemini API
     async generateContent(systemPrompt, conversationHistory) {
-        const keys = this.apiKeys.length > 0 ? this.apiKeys : [this.apiKey];
-        let lastError = null;
+        try {
+            const response = await this.makeRequest(
+                systemPrompt,
+                conversationHistory
+            );
+            this.failureCount = 0;
+            return response;
+        } catch (error) {
+            console.error(`Error with ${this.currentModel}:`, error);
+            this.failureCount++;
 
-        for (let i = 0; i < keys.length; i++) {
-            const keyIndex = (this.apiKeyIndex + i) % keys.length;
-            this.apiKey = keys[keyIndex];
-            this.currentModel = CONFIG.PRIMARY_MODEL;
-
-            try {
-                const response = await this.makeRequest(
-                    this.currentModel,
-                    systemPrompt,
-                    conversationHistory
-                );
-                this.failureCount = 0;
-                this.apiKeyIndex = keyIndex;
-                return response;
-            } catch (error) {
-                console.error(`Error with ${this.currentModel} using key ${keyIndex + 1}:`, error);
-                this.failureCount++;
-                this.currentModel = CONFIG.FALLBACK_MODEL;
+            if (this.currentModel === CONFIG.PRIMARY_MODEL && this.failureCount >= 2) {
                 console.log('Switching to fallback model...');
+                this.currentModel = CONFIG.FALLBACK_MODEL;
 
                 try {
                     const response = await this.makeRequest(
-                        this.currentModel,
                         systemPrompt,
                         conversationHistory
                     );
                     this.failureCount = 0;
-                    this.apiKeyIndex = keyIndex;
                     return response;
                 } catch (fallbackError) {
-                    console.error(`Fallback model also failed for key ${keyIndex + 1}:`, fallbackError);
-                    lastError = fallbackError;
+                    console.error('Fallback model also failed:', fallbackError);
+                    throw new Error('Both primary and fallback models failed. Please check your API configuration.');
                 }
             }
-        }
 
-        throw new Error('All API keys failed with both primary and fallback models. Please check your API keys and internet connection.');
+            throw error;
+        }
     }
 
     // Make API request (defensive extraction of response text)
-    async makeRequest(model, systemPrompt, conversationHistory) {
+    async makeRequest(systemPrompt, conversationHistory) {
         this.requestCount++;
-        
-        const contents = [
-            {
-                role: 'user',
-                parts: [{ text: systemPrompt }]
-            },
-            ...conversationHistory
-        ];
 
         const requestBody = {
-            contents: contents,
-            generationConfig: {
-                temperature: 0.4,
-                topK: 40,
-                topP: 0.95,
-                maxOutputTokens: 1024,
-            },
-            safetySettings: [
-                {
-                    category: 'HARM_CATEGORY_HARASSMENT',
-                    threshold: 'BLOCK_MEDIUM_AND_ABOVE'
-                },
-                {
-                    category: 'HARM_CATEGORY_HATE_SPEECH',
-                    threshold: 'BLOCK_MEDIUM_AND_ABOVE'
-                },
-                {
-                    category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT',
-                    threshold: 'BLOCK_MEDIUM_AND_ABOVE'
-                },
-                {
-                    category: 'HARM_CATEGORY_DANGEROUS_CONTENT',
-                    threshold: 'BLOCK_MEDIUM_AND_ABOVE'
-                }
-            ]
+            systemPrompt,
+            conversationHistory
         };
 
-        const url = `${this.baseUrl}/${model}:generateContent?key=${this.apiKey}`;
-
-        const response = await fetch(url, {
+        const response = await fetch(this.apiEndpoint, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -326,17 +278,12 @@ Important:
     }
 
     let lastError = null;
-    const keys = this.apiKeys.length > 0 ? this.apiKeys : [this.apiKey];
+    this.currentModel = CONFIG.PRIMARY_MODEL;
+    this.failureCount = 0;
 
-    for (let i = 0; i < keys.length; i++) {
-        const keyIndex = (this.apiKeyIndex + i) % keys.length;
-        this.apiKey = keys[keyIndex];
-        this.currentModel = CONFIG.PRIMARY_MODEL;
-        this.failureCount = 0;
-
-        for (let attempt = 0; attempt <= maxRetries; attempt++) {
-            try {
-                const raw = await this.makeRequest(this.currentModel, feedbackPrompt, []);
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+        try {
+            const raw = await this.makeRequest(feedbackPrompt, []);
                 let parsed = null;
                 try {
                     parsed = JSON.parse(raw);
@@ -357,7 +304,7 @@ ${raw}
 -----
 Please return valid JSON ONLY that follows the required schema.
 `;
-                        await this.makeRequest(this.currentModel, repairPrompt, []);
+                        await this.makeRequest(repairPrompt, []);
                         continue;
                     } else {
                         break;
@@ -373,12 +320,11 @@ Please return valid JSON ONLY that follows the required schema.
 The JSON returned a low confidence (${conf}). Please re-evaluate and output valid JSON with role-specific improvements for "${jobRole.title}".
 ${userInfo ? `Remember to personalize for ${userInfo.fullName}.` : ''}
 `;
-                    await this.makeRequest(this.currentModel, repairPrompt, []);
+                    await this.makeRequest(repairPrompt, []);
                     continue;
                 }
 
                 const finalFeedback = this.ensureAllFields(validated.parsedFeedback, conversationData, jobRole);
-                this.apiKeyIndex = keyIndex;
                 return finalFeedback;
 
             } catch (err) {
@@ -392,7 +338,6 @@ ${userInfo ? `Remember to personalize for ${userInfo.fullName}.` : ''}
                 continue;
             }
         }
-    }
 
     // Fallback with user info consideration
     console.error('All attempts failed or produced invalid JSON. Last error:', lastError);
