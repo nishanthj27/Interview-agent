@@ -45,12 +45,13 @@ class GeminiService {
     }
 
     // Make API request (defensive extraction of response text)
-    async makeRequest(systemPrompt, conversationHistory) {
+    async makeRequest(systemPrompt, conversationHistory, options = {}) {
         this.requestCount++;
 
         const requestBody = {
             systemPrompt,
-            conversationHistory
+            conversationHistory,
+            expectJson: options.expectJson === true
         };
 
         const response = await fetch(this.apiEndpoint, {
@@ -283,7 +284,7 @@ Important:
 
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
         try {
-            const raw = await this.makeRequest(feedbackPrompt, []);
+            const raw = await this.makeRequest(feedbackPrompt, [], { expectJson: true });
                 let parsed = null;
                 try {
                     parsed = JSON.parse(raw);
@@ -304,7 +305,7 @@ ${raw}
 -----
 Please return valid JSON ONLY that follows the required schema.
 `;
-                        await this.makeRequest(repairPrompt, []);
+                        await this.makeRequest(repairPrompt, [], { expectJson: true });
                         continue;
                     } else {
                         break;
@@ -320,7 +321,7 @@ Please return valid JSON ONLY that follows the required schema.
 The JSON returned a low confidence (${conf}). Please re-evaluate and output valid JSON with role-specific improvements for "${jobRole.title}".
 ${userInfo ? `Remember to personalize for ${userInfo.fullName}.` : ''}
 `;
-                    await this.makeRequest(repairPrompt, []);
+                    await this.makeRequest(repairPrompt, [], { expectJson: true });
                     continue;
                 }
 

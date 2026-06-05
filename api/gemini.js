@@ -17,7 +17,7 @@ function getApiKeys() {
     return [];
 }
 
-function buildRequestBody(systemPrompt, conversationHistory) {
+function buildRequestBody(systemPrompt, conversationHistory, expectJson) {
     const contents = [
         {
             role: 'user',
@@ -26,14 +26,20 @@ function buildRequestBody(systemPrompt, conversationHistory) {
         ...(Array.isArray(conversationHistory) ? conversationHistory : [])
     ];
 
+    const generationConfig = {
+        temperature: 0.4,
+        topK: 40,
+        topP: 0.95,
+        maxOutputTokens: 1024
+    };
+
+    if (expectJson) {
+        generationConfig.responseMimeType = 'application/json';
+    }
+
     return {
         contents,
-        generationConfig: {
-            temperature: 0.4,
-            topK: 40,
-            topP: 0.95,
-            maxOutputTokens: 1024
-        },
+        generationConfig,
         safetySettings: [
             { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
             { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
@@ -76,6 +82,7 @@ export default async function handler(req, res) {
     const body = typeof req.body === 'string' ? JSON.parse(req.body || '{}') : (req.body || {});
     const systemPrompt = (body.systemPrompt || '').toString();
     const conversationHistory = body.conversationHistory || [];
+    const expectJson = body.expectJson === true;
 
     if (!systemPrompt) {
         return res.status(400).json({ error: { message: 'Missing systemPrompt' } });
@@ -88,7 +95,7 @@ export default async function handler(req, res) {
 
     const primaryModel = process.env.PRIMARY_MODEL || 'gemini-2.5-flash';
     const fallbackModel = process.env.FALLBACK_MODEL || 'gemini-2.5-flash-lite';
-    const requestBody = buildRequestBody(systemPrompt, conversationHistory);
+    const requestBody = buildRequestBody(systemPrompt, conversationHistory, expectJson);
 
     let lastError = null;
 
